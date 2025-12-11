@@ -353,21 +353,39 @@ var booking = await _context.Bookings
 
 ## Database Configuration
 
+### SQL Server Credentials
+- **Server**: `localhost` (or `.` for local instance)
+- **Username**: `sa`
+- **Password**: `!Famel1965`
+- **Database**: `WorkSpaceManager`
+
 ### Connection Strings
 ```json
 // Development (appsettings.json)
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=WorkSpaceManager;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;"
+    "DefaultConnection": "Server=localhost;Database=WorkSpaceManager;User Id=sa;Password=!Famel1965;TrustServerCertificate=True;"
   }
 }
 
 // Docker environment
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=sqlserver;Database=WorkSpaceManager;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;"
+    "DefaultConnection": "Server=sqlserver;Database=WorkSpaceManager;User Id=sa;Password=!Famel1965;TrustServerCertificate=True;"
   }
 }
+```
+
+### Database Setup
+```powershell
+# Create database using the unified schema script
+sqlcmd -S localhost -U sa -P "!Famel1965" -i "WorkSpaceManager_Unified_Database_Schema.sql"
+
+# Seed sample data
+sqlcmd -S localhost -U sa -P "!Famel1965" -i "WorkSpaceManager_Seed_Data.sql"
+
+# Verify database exists
+sqlcmd -S localhost -U sa -P "!Famel1965" -Q "SELECT name FROM sys.databases WHERE name = 'WorkSpaceManager'"
 ```
 
 ### Database Schema
