@@ -221,6 +221,9 @@ public class User : TenantEntity
     [MaxLength(255)]
     public string Email { get; set; } = string.Empty;
     
+    [MaxLength(500)]
+    public string? PasswordHash { get; set; }
+    
     [MaxLength(100)]
     public string? Department { get; set; }
     
@@ -234,12 +237,222 @@ public class User : TenantEntity
     
     public bool IsActive { get; set; } = true;
     
-    [Required]
     [MaxLength(100)]
-    public string KeycloakUserId { get; set; } = string.Empty;
+    public string? KeycloakUserId { get; set; }
+    
+    public DateTime? LastLoginDate { get; set; }
+    
+    public int FailedLoginAttempts { get; set; } = 0;
+    
+    public DateTime? LockoutEndDate { get; set; }
+    
+    [MaxLength(50)]
+    public string? PhoneNumber { get; set; }
     
     // Navigation properties
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    public virtual ICollection<GroupMember> GroupMemberships { get; set; } = new List<GroupMember>();
+    public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+}
+
+// ==================== IDENTITY ENTITIES ====================
+
+[Table("Roles")]
+public class Role : TenantEntity
+{
+    [Required]
+    [MaxLength(100)]
+    public string Name { get; set; } = string.Empty;
+    
+    [MaxLength(500)]
+    public string? Description { get; set; }
+    
+    public bool IsActive { get; set; } = true;
+    
+    public bool IsSystemRole { get; set; } = false;
+    
+    // Navigation properties
+    public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    public virtual ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
+}
+
+[Table("UserRoles")]
+public class UserRole : TenantEntity
+{
+    [Required]
+    public Guid UserId { get; set; }
+    
+    [Required]
+    public Guid RoleId { get; set; }
+    
+    public bool IsActive { get; set; } = true;
+    
+    public DateTime? ExpiresAt { get; set; }
+    
+    // Navigation properties
+    [ForeignKey(nameof(UserId))]
+    public virtual User User { get; set; } = null!;
+    
+    [ForeignKey(nameof(RoleId))]
+    public virtual Role Role { get; set; } = null!;
+}
+
+[Table("Permissions")]
+public class Permission : TenantEntity
+{
+    [Required]
+    [MaxLength(100)]
+    public string Name { get; set; } = string.Empty;
+    
+    [MaxLength(500)]
+    public string? Description { get; set; }
+    
+    [Required]
+    [MaxLength(100)]
+    public string Resource { get; set; } = string.Empty;
+    
+    [Required]
+    [MaxLength(50)]
+    public string Action { get; set; } = string.Empty;
+    
+    public bool IsActive { get; set; } = true;
+    
+    // Navigation properties
+    public virtual ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
+}
+
+[Table("RolePermissions")]
+public class RolePermission : TenantEntity
+{
+    [Required]
+    public Guid RoleId { get; set; }
+    
+    [Required]
+    public Guid PermissionId { get; set; }
+    
+    public bool IsActive { get; set; } = true;
+    
+    // Navigation properties
+    [ForeignKey(nameof(RoleId))]
+    public virtual Role Role { get; set; } = null!;
+    
+    [ForeignKey(nameof(PermissionId))]
+    public virtual Permission Permission { get; set; } = null!;
+}
+
+[Table("Groups")]
+public class Group : TenantEntity
+{
+    [Required]
+    [MaxLength(200)]
+    public string Name { get; set; } = string.Empty;
+    
+    [MaxLength(500)]
+    public string? Description { get; set; }
+    
+    public Guid? ParentGroupId { get; set; }
+    
+    public bool IsActive { get; set; } = true;
+    
+    // Navigation properties
+    [ForeignKey(nameof(ParentGroupId))]
+    public virtual Group? ParentGroup { get; set; }
+    
+    public virtual ICollection<Group> ChildGroups { get; set; } = new List<Group>();
+    public virtual ICollection<GroupMember> Members { get; set; } = new List<GroupMember>();
+}
+
+[Table("GroupMembers")]
+public class GroupMember : TenantEntity
+{
+    [Required]
+    public Guid GroupId { get; set; }
+    
+    [Required]
+    public Guid UserId { get; set; }
+    
+    public bool IsActive { get; set; } = true;
+    
+    public DateTime? ExpiresAt { get; set; }
+    
+    // Navigation properties
+    [ForeignKey(nameof(GroupId))]
+    public virtual Group Group { get; set; } = null!;
+    
+    [ForeignKey(nameof(UserId))]
+    public virtual User User { get; set; } = null!;
+}
+
+[Table("RefreshTokens")]
+public class RefreshToken : TenantEntity
+{
+    [Required]
+    public Guid UserId { get; set; }
+    
+    [Required]
+    [MaxLength(500)]
+    public string Token { get; set; } = string.Empty;
+    
+    [Required]
+    public DateTime ExpiresAt { get; set; }
+    
+    public bool IsRevoked { get; set; } = false;
+    
+    public DateTime? RevokedAt { get; set; }
+    
+    [MaxLength(500)]
+    public string? ReplacedByToken { get; set; }
+    
+    [MaxLength(50)]
+    public string? CreatedByIp { get; set; }
+    
+    [MaxLength(50)]
+    public string? RevokedByIp { get; set; }
+    
+    // Navigation properties
+    [ForeignKey(nameof(UserId))]
+    public virtual User User { get; set; } = null!;
+}
+
+// ==================== AUDIT ENTITIES ====================
+
+[Table("AuditLogs")]
+public class AuditLog : TenantEntity
+{
+    public Guid? UserId { get; set; }
+    
+    [MaxLength(255)]
+    public string? UserName { get; set; }
+    
+    [Required]
+    [MaxLength(100)]
+    public string Action { get; set; } = string.Empty;
+    
+    [Required]
+    [MaxLength(200)]
+    public string Resource { get; set; } = string.Empty;
+    
+    [MaxLength(100)]
+    public string? ResourceId { get; set; }
+    
+    public bool Success { get; set; } = true;
+    
+    [MaxLength(500)]
+    public string? Details { get; set; }
+    
+    [MaxLength(500)]
+    public string? ErrorMessage { get; set; }
+    
+    [MaxLength(50)]
+    public string? IpAddress { get; set; }
+    
+    [MaxLength(500)]
+    public string? UserAgent { get; set; }
+    
+    public long? DurationMs { get; set; }
+    
+    public string? Metadata { get; set; } // JSON serialized additional data
 }
 
 // ==================== CONSTANTS ====================
@@ -258,4 +471,27 @@ public static class ResourceType
 {
     public const string Desk = "Desk";
     public const string MeetingRoom = "MeetingRoom";
+}
+
+public static class AuditActions
+{
+    public const string Create = "Create";
+    public const string Read = "Read";
+    public const string Update = "Update";
+    public const string Delete = "Delete";
+    public const string Login = "Login";
+    public const string Logout = "Logout";
+    public const string PasswordChange = "PasswordChange";
+    public const string PasswordReset = "PasswordReset";
+    public const string RoleAssign = "RoleAssign";
+    public const string RoleRevoke = "RoleRevoke";
+    public const string CheckIn = "CheckIn";
+    public const string CheckOut = "CheckOut";
+}
+
+public static class SystemRoles
+{
+    public const string Admin = "Admin";
+    public const string FacilityManager = "FacilityManager";
+    public const string User = "User";
 }

@@ -29,19 +29,20 @@ WorkSpaceManager is a production-ready workspace booking and management system b
          │      - Ocelot Routing              │
          │      - JWT Authentication          │
          │      - Rate Limiting               │
-         └────┬───────────────────────┬───────┘
-              │                       │
-              ↓                       ↓
-    ┌─────────────────┐    ┌─────────────────────┐
-    │ Booking Service │    │ Space Management    │
-    │ (Port 5001)     │    │ Service (Port 5002) │
-    └────────┬────────┘    └────────┬────────────┘
-             │                      │
-             └──────────┬───────────┘
-                        ↓
-             ┌─────────────────────┐
-             │  SQL Server + Keycloak │
-             └─────────────────────┘
+         └────┬───────┬───────┬───────┬───────┘
+              │       │       │       │
+              ↓       ↓       ↓       ↓
+    ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+    │  Booking    │ │    Space    │ │  Identity   │ │   Audit     │
+    │  Service    │ │ Management  │ │  Service    │ │  Service    │
+    │ (Port 5001) │ │ (Port 5002) │ │ (Port 5004) │ │ (Port 5003) │
+    └──────┬──────┘ └──────┬──────┘ └──────┬──────┘ └──────┬──────┘
+           │               │               │               │
+           └───────────────┴───────────────┴───────────────┘
+                                   ↓
+                    ┌─────────────────────┐
+                    │     SQL Server      │
+                    └─────────────────────┘
 ```
 
 ## Key Domain Concepts
@@ -59,8 +60,16 @@ WorkSpaceManager is a production-ready workspace booking and management system b
 - `BookingStatus` - Workflow states: `Pending`, `Confirmed`, `CheckedIn`, `CheckedOut`, `Cancelled`, `NoShow`
 
 **Identity:**
-- `User` - Employee profiles synced with Keycloak
+- `User` - Employee profiles with authentication credentials
+- `Role` - User roles for authorization (Admin, User, FacilityManager)
+- `UserRole` - Many-to-many relationship between users and roles
+- `Group` - Groups for team organization
+- `GroupMember` - Many-to-many relationship between users and groups
+- `RefreshToken` - JWT refresh tokens for authentication
 - `TenantId` - Multi-tenant isolation identifier
+
+**Audit:**
+- `AuditLog` - System audit trail for tracking all user actions
 
 ### Business Rules
 - Users can book desks or meeting rooms for specific time slots
@@ -90,19 +99,42 @@ WorkSpaceManager/
 │       │   │   ├── Data/
 │       │   │   │   └── BookingDbContext.cs
 │       │   │   └── Program.cs
-│       │   └── SpaceManagementService/     # Space Management (Port 5002)
+│       │   ├── SpaceManagementService/     # Space Management (Port 5002)
+│       │   │   ├── Controllers/
+│       │   │   │   ├── BuildingsController.cs
+│       │   │   │   ├── FloorsController.cs
+│       │   │   │   ├── DesksController.cs
+│       │   │   │   └── MeetingRoomsController.cs
+│       │   │   ├── Services/
+│       │   │   │   ├── IBuildingService.cs, BuildingService.cs
+│       │   │   │   ├── IFloorService.cs, FloorService.cs
+│       │   │   │   ├── IDeskService.cs, DeskService.cs
+│       │   │   │   └── IMeetingRoomService.cs, MeetingRoomService.cs
+│       │   │   └── Data/
+│       │   │       └── SpaceDbContext.cs
+│       │   ├── Audit/                      # Audit Service (Port 5003)
+│       │   │   ├── Controllers/
+│       │   │   │   └── AuditController.cs
+│       │   │   ├── Services/
+│       │   │   │   ├── IAuditLogService.cs
+│       │   │   │   └── AuditLogService.cs
+│       │   │   ├── Data/
+│       │   │   │   └── AuditDbContext.cs
+│       │   │   └── Program.cs
+│       │   └── Identity/                   # Identity Service (Port 5004)
 │       │       ├── Controllers/
-│       │       │   ├── BuildingsController.cs
-│       │       │   ├── FloorsController.cs
-│       │       │   ├── DesksController.cs
-│       │       │   └── MeetingRoomsController.cs
+│       │       │   ├── AuthController.cs
+│       │       │   ├── UsersController.cs
+│       │       │   ├── RolesController.cs
+│       │       │   └── GroupsController.cs
 │       │       ├── Services/
-│       │       │   ├── IBuildingService.cs, BuildingService.cs
-│       │       │   ├── IFloorService.cs, FloorService.cs
-│       │       │   ├── IDeskService.cs, DeskService.cs
-│       │       │   └── IMeetingRoomService.cs, MeetingRoomService.cs
-│       │       └── Data/
-│       │           └── SpaceDbContext.cs
+│       │       │   ├── IJwtService.cs, JwtService.cs
+│       │       │   ├── IUserService.cs, UserService.cs
+│       │       │   ├── IRoleService.cs, RoleService.cs
+│       │       │   └── IGroupService.cs, GroupService.cs
+│       │       ├── Data/
+│       │       │   └── IdentityDbContext.cs
+│       │       └── Program.cs
 │       ├── Shared/                         # Shared Libraries
 │       │   ├── Common/                     # ApiResponse, PagedResponse utilities
 │       │   │   ├── ApiResponse.cs
@@ -110,6 +142,8 @@ WorkSpaceManager/
 │       │   ├── DTOs/                       # Data Transfer Objects
 │       │   │   ├── BookingDTOs.cs
 │       │   │   ├── SpaceDTOs.cs
+│       │   │   ├── IdentityDTOs.cs         # User, Role, Group DTOs
+│       │   │   ├── AuditDTOs.cs            # Audit log DTOs
 │       │   │   └── DTOs.csproj
 │       │   └── Models/                     # Entity Models
 │       │       ├── Entities.cs
@@ -165,7 +199,15 @@ dotnet run  # Runs on port 5001
 cd WorkSpaceManager_FullStack/src/Services/SpaceManagementService
 dotnet run  # Runs on port 5002
 
-# Terminal 4 - Web Application
+# Terminal 4 - Audit Service
+cd WorkSpaceManager_FullStack/src/Services/Audit
+dotnet run  # Runs on port 5003
+
+# Terminal 5 - Identity Service
+cd WorkSpaceManager_FullStack/src/Services/Identity
+dotnet run  # Runs on port 5004
+
+# Terminal 6 - Web Application
 cd WorkSpaceManager_FullStack/src/WebApp
 npm install
 npm start   # Runs on port 3000
@@ -324,6 +366,45 @@ var bookings = await _context.Bookings
 | GET/POST | `/api/meetingrooms` | List/Create rooms | Admin |
 | GET/PUT/DELETE | `/api/meetingrooms/{id}` | CRUD room | Admin |
 | GET | `/api/meetingrooms/search` | Search available rooms | User |
+
+### Audit Service (Port 5003)
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/api/audit/logs` | Create audit log entry | Service |
+| GET | `/api/audit/logs` | Search/list audit logs | Admin |
+| GET | `/api/audit/logs/{id}` | Get audit log by ID | Admin |
+| DELETE | `/api/audit/logs/{id}` | Delete audit log | Admin |
+| GET | `/api/audit/stats` | Get audit statistics | Admin |
+| GET | `/api/audit/export` | Export audit logs (CSV) | Admin |
+
+### Identity Service (Port 5004)
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/api/auth/login` | User login | Public |
+| POST | `/api/auth/register` | User registration | Public |
+| POST | `/api/auth/refresh` | Refresh JWT token | Public |
+| POST | `/api/auth/logout` | User logout | User |
+| GET | `/api/auth/me` | Get current user profile | User |
+| GET | `/api/users` | List users | Admin |
+| GET | `/api/users/{id}` | Get user by ID | Admin |
+| PUT | `/api/users/{id}` | Update user | Admin |
+| DELETE | `/api/users/{id}` | Delete user | Admin |
+| POST | `/api/users/{id}/roles` | Assign role to user | Admin |
+| DELETE | `/api/users/{id}/roles/{roleId}` | Remove role from user | Admin |
+| GET | `/api/roles` | List roles | Admin |
+| POST | `/api/roles` | Create role | Admin |
+| GET | `/api/roles/{id}` | Get role by ID | Admin |
+| PUT | `/api/roles/{id}` | Update role | Admin |
+| DELETE | `/api/roles/{id}` | Delete role | Admin |
+| GET | `/api/roles/{id}/users` | Get users in role | Admin |
+| GET | `/api/groups` | List groups | User |
+| POST | `/api/groups` | Create group | Admin |
+| GET | `/api/groups/{id}` | Get group by ID | User |
+| PUT | `/api/groups/{id}` | Update group | Admin |
+| DELETE | `/api/groups/{id}` | Delete group | Admin |
+| GET | `/api/groups/{id}/members` | Get group members | User |
+| POST | `/api/groups/{id}/members` | Add member to group | Admin |
+| DELETE | `/api/groups/{id}/members/{userId}` | Remove member from group | Admin |
 
 ## Authentication & Authorization
 
@@ -556,6 +637,8 @@ Invoke-RestMethod -Uri "http://localhost:5000/api/bookings/my-bookings" -Headers
 | API Gateway | 5000 | `netstat -an | findstr :5000` |
 | Booking Service | 5001 | `netstat -an | findstr :5001` |
 | Space Service | 5002 | `netstat -an | findstr :5002` |
+| Audit Service | 5003 | `netstat -an | findstr :5003` |
+| Identity Service | 5004 | `netstat -an | findstr :5004` |
 | Web App | 3000 | `netstat -an | findstr :3000` |
 | Keycloak | 8080 | `netstat -an | findstr :8080` |
 | SQL Server | 1433 | `netstat -an | findstr :1433` |
