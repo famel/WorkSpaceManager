@@ -1,0 +1,158 @@
+{
+  "clientId": "workspace-manager-mobile",
+  "name": "WorkSpace Manager Mobile",
+  "description": "React Native mobile application for WorkSpace Manager",
+  "rootUrl": "",
+  "adminUrl": "",
+  "baseUrl": "",
+  "surrogateAuthRequired": false,
+  "enabled": true,
+  "alwaysDisplayInConsole": false,
+  "clientAuthenticatorType": "client-secret",
+  "redirectUris": [
+    "workspacemanager://*",
+    "com.alphabank.workspacemanager://*",
+    "exp://localhost:19000/*",
+    "exp://192.168.*:19000/*"
+  ],
+  "webOrigins": [],
+  "notBefore": 0,
+  "bearerOnly": false,
+  "consentRequired": false,
+  "standardFlowEnabled": true,
+  "implicitFlowEnabled": false,
+  "directAccessGrantsEnabled": false,
+  "serviceAccountsEnabled": false,
+  "publicClient": true,
+  "frontchannelLogout": false,
+  "protocol": "openid-connect",
+  "attributes": {
+    "oidc.ciba.grant.enabled": "false",
+    "backchannel.logout.session.required": "false",
+    "backchannel.logout.revoke.offline.tokens": "false",
+    "display.on.consent.screen": "false",
+    "oauth2.device.authorization.grant.enabled": "false",
+    "post.logout.redirect.uris": "workspacemanager://*##com.alphabank.workspacemanager://*",
+    "pkce.code.challenge.method": "S256",
+    "access.token.lifespan": "1800",
+    "tls.client.certificate.bound.access.tokens": "false",
+    "require.pushed.authorization.requests": "false",
+    "acr.loa.map": "{}",
+    "use.refresh.tokens": "true",
+    "refresh.token.max.reuse": "0",
+    "id.token.as.detached.signature": "false"
+  },
+  "authenticationFlowBindingOverrides": {},
+  "fullScopeAllowed": true,
+  "nodeReRegistrationTimeout": -1,
+  "protocolMappers": [
+    {
+      "name": "tenant-id",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usermodel-attribute-mapper",
+      "consentRequired": false,
+      "config": {
+        "userinfo.token.claim": "true",
+        "user.attribute": "tenant_id",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "claim.name": "tenant_id",
+        "jsonType.label": "String"
+      }
+    },
+    {
+      "name": "employee-id",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usermodel-attribute-mapper",
+      "consentRequired": false,
+      "config": {
+        "userinfo.token.claim": "true",
+        "user.attribute": "employeeId",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "claim.name": "employeeId",
+        "jsonType.label": "String"
+      }
+    },
+    {
+      "name": "department",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usermodel-attribute-mapper",
+      "consentRequired": false,
+      "config": {
+        "userinfo.token.claim": "true",
+        "user.attribute": "department",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "claim.name": "department",
+        "jsonType.label": "String"
+      }
+    },
+    {
+      "name": "job-title",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usermodel-attribute-mapper",
+      "consentRequired": false,
+      "config": {
+        "userinfo.token.claim": "true",
+        "user.attribute": "jobTitle",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "claim.name": "jobTitle",
+        "jsonType.label": "String"
+      }
+    },
+    {
+      "name": "preferred-language",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usermodel-attribute-mapper",
+      "consentRequired": false,
+      "config": {
+        "userinfo.token.claim": "true",
+        "user.attribute": "preferredLanguage",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "claim.name": "preferredLanguage",
+        "jsonType.label": "String"
+      }
+    },
+    {
+      "name": "realm-roles",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usermodel-realm-role-mapper",
+      "consentRequired": false,
+      "config": {
+        "userinfo.token.claim": "true",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "claim.name": "realm_access.roles",
+        "jsonType.label": "String",
+        "multivalued": "true"
+      }
+    },
+    {
+      "name": "audience-mapper",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-audience-mapper",
+      "consentRequired": false,
+      "config": {
+        "included.client.audience": "workspace-manager-api",
+        "id.token.claim": "false",
+        "access.token.claim": "true"
+      }
+    }
+  ],
+  "defaultClientScopes": [
+    "web-origins",
+    "acr",
+    "profile",
+    "roles",
+    "email"
+  ],
+  "optionalClientScopes": [
+    "address",
+    "phone",
+    "offline_access",
+    "microprofile-jwt"
+  ]
+}

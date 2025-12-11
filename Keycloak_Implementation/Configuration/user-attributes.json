@@ -1,0 +1,259 @@
+{
+  "userProfileConfiguration": {
+    "attributes": [
+      {
+        "name": "username",
+        "displayName": "${username}",
+        "validations": {
+          "length": {
+            "min": 3,
+            "max": 255
+          },
+          "username-prohibited-characters": {}
+        },
+        "permissions": {
+          "view": [
+            "admin",
+            "user"
+          ],
+          "edit": [
+            "admin"
+          ]
+        },
+        "multivalued": false
+      },
+      {
+        "name": "email",
+        "displayName": "${email}",
+        "validations": {
+          "email": {},
+          "length": {
+            "max": 255
+          }
+        },
+        "required": {
+          "roles": [
+            "user"
+          ]
+        },
+        "permissions": {
+          "view": [
+            "admin",
+            "user"
+          ],
+          "edit": [
+            "admin",
+            "user"
+          ]
+        },
+        "multivalued": false
+      },
+      {
+        "name": "firstName",
+        "displayName": "${firstName}",
+        "validations": {
+          "length": {
+            "max": 255
+          }
+        },
+        "required": {
+          "roles": [
+            "user"
+          ]
+        },
+        "permissions": {
+          "view": [
+            "admin",
+            "user"
+          ],
+          "edit": [
+            "admin",
+            "user"
+          ]
+        },
+        "multivalued": false
+      },
+      {
+        "name": "lastName",
+        "displayName": "${lastName}",
+        "validations": {
+          "length": {
+            "max": 255
+          }
+        },
+        "required": {
+          "roles": [
+            "user"
+          ]
+        },
+        "permissions": {
+          "view": [
+            "admin",
+            "user"
+          ],
+          "edit": [
+            "admin",
+            "user"
+          ]
+        },
+        "multivalued": false
+      },
+      {
+        "name": "employeeId",
+        "displayName": "Employee ID",
+        "validations": {
+          "length": {
+            "max": 50
+          }
+        },
+        "required": {
+          "roles": [
+            "user"
+          ]
+        },
+        "permissions": {
+          "view": [
+            "admin",
+            "user"
+          ],
+          "edit": [
+            "admin"
+          ]
+        },
+        "multivalued": false,
+        "annotations": {
+          "description": "Unique employee identifier from HR system"
+        }
+      },
+      {
+        "name": "department",
+        "displayName": "Department",
+        "validations": {
+          "length": {
+            "max": 100
+          }
+        },
+        "permissions": {
+          "view": [
+            "admin",
+            "user"
+          ],
+          "edit": [
+            "admin"
+          ]
+        },
+        "multivalued": false,
+        "annotations": {
+          "description": "Employee department (e.g., IT, Finance, HR)"
+        }
+      },
+      {
+        "name": "jobTitle",
+        "displayName": "Job Title",
+        "validations": {
+          "length": {
+            "max": 100
+          }
+        },
+        "permissions": {
+          "view": [
+            "admin",
+            "user"
+          ],
+          "edit": [
+            "admin"
+          ]
+        },
+        "multivalued": false,
+        "annotations": {
+          "description": "Employee job title"
+        }
+      },
+      {
+        "name": "managerId",
+        "displayName": "Manager ID",
+        "validations": {
+          "length": {
+            "max": 36
+          }
+        },
+        "permissions": {
+          "view": [
+            "admin",
+            "manager"
+          ],
+          "edit": [
+            "admin"
+          ]
+        },
+        "multivalued": false,
+        "annotations": {
+          "description": "GUID of the employee's manager"
+        }
+      },
+      {
+        "name": "tenant_id",
+        "displayName": "Tenant ID",
+        "validations": {
+          "length": {
+            "max": 36
+          }
+        },
+        "required": {
+          "roles": [
+            "user"
+          ]
+        },
+        "permissions": {
+          "view": [
+            "admin"
+          ],
+          "edit": [
+            "admin"
+          ]
+        },
+        "multivalued": false,
+        "annotations": {
+          "description": "Tenant identifier for multi-tenancy support"
+        }
+      },
+      {
+        "name": "preferredLanguage",
+        "displayName": "Preferred Language",
+        "validations": {
+          "length": {
+            "max": 10
+          },
+          "options": {
+            "options": [
+              "en",
+              "el"
+            ]
+          }
+        },
+        "permissions": {
+          "view": [
+            "admin",
+            "user"
+          ],
+          "edit": [
+            "admin",
+            "user"
+          ]
+        },
+        "multivalued": false,
+        "annotations": {
+          "description": "User's preferred language (en=English, el=Greek)"
+        }
+      }
+    ],
+    "groups": [
+      {
+        "name": "user-metadata",
+        "displayHeader": "User Information",
+        "displayDescription": "Basic user information and attributes",
+        "annotations": {}
+      }
+    ]
+  }
+}

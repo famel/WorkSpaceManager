@@ -1,0 +1,100 @@
+{
+  "project_info": {
+    "title": "Ατζέντα",
+    "created": 1765307322.2553015,
+    "last_updated": 1765307544.6787522,
+    "total_slides": 11
+  },
+  "slides": {
+    "agenda": "edited",
+    "functional_reqs_1": "edited",
+    "functional_reqs_2": "edited",
+    "web_poc_dashboard": "edited",
+    "web_poc_calendar": "edited",
+    "web_poc_analytics": "edited",
+    "mobile_reqs": "edited",
+    "mobile_home": "edited",
+    "mobile_map": "edited",
+    "mobile_pass": "edited",
+    "conclusion": "edited"
+  },
+  "outline": [
+    {
+      "id": "agenda",
+      "title": "Ατζέντα",
+      "summary": "Επισκόπηση της δομής της παρουσίασης, καλύπτοντας λειτουργικές απαιτήσεις, Web POC, Mobile App και επόμενα βήματα.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": ""
+    },
+    {
+      "id": "functional_reqs_1",
+      "title": "Λειτουργικές Απαιτήσεις (1/2)",
+      "summary": "Παρουσίαση των πρώτων 5 βασικών σεναρίων χρήσης, συμπεριλαμβανομένης της ενιαίας κράτησης και του συγχρονισμού ημερολογίων.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": ""
+    },
+    {
+      "id": "functional_reqs_2",
+      "title": "Λειτουργικές Απαιτήσεις (2/2)",
+      "summary": "Παρουσίαση των υπόλοιπων 5 σεναρίων χρήσης, εστιάζοντας στην ενσωμάτωση ΕΡΓΑΝΗ, API και αναφορές.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": ""
+    },
+    {
+      "id": "web_poc_dashboard",
+      "title": "Web POC: Κεντρικό Dashboard",
+      "summary": "Παρουσίαση της κεντρικής οθόνης διαχείρισης με widgets και επισκόπηση κρατήσεων.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": ""
+    },
+    {
+      "id": "web_poc_calendar",
+      "title": "Web POC: Ημερολόγιο & Συγχρονισμός",
+      "summary": "Απεικόνιση της λειτουργικότητας ημερολογίου και του συγχρονισμού με Outlook.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": ""
+    },
+    {
+      "id": "web_poc_analytics",
+      "title": "Web POC: Αναλυτικά Στατιστικά",
+      "summary": "Παρουσίαση των εργαλείων reporting και ανάλυσης δεδομένων χρήσης.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": ""
+    },
+    {
+      "id": "mobile_reqs",
+      "title": "Mobile App Απαιτήσεις",
+      "summary": "Επισκόπηση των βασικών χαρακτηριστικών της mobile εφαρμογής, όπως native εμπειρία και offline mode.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": ""
+    },
+    {
+      "id": "mobile_home",
+      "title": "Mobile App: Αρχική Οθόνη",
+      "summary": "Παρουσίαση της αρχικής οθόνης της mobile εφαρμογής με προσωποποιημένες πληροφορίες.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": ""
+    },
+    {
+      "id": "mobile_map",
+      "title": "Mobile App: Διαδραστική Κάτοψη",
+      "summary": "Επίδειξη της λειτουργίας εύρεσης και κράτησης θέσης μέσω χάρτη στο κινητό.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": ""
+    },
+    {
+      "id": "mobile_pass",
+      "title": "Mobile App: Digital Pass",
+      "summary": "Παρουσίαση της ψηφιακής ταυτότητας για είσοδο και check-in.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": ""
+    },
+    {
+      "id": "conclusion",
+      "title": "Συμπεράσματα & Επόμενα Βήματα",
+      "summary": "Σύνοψη των αποτελεσμάτων και καθορισμός των επόμενων ενεργειών για την υλοποίηση.",
+      "image_plan": "Use a suitable image if needed",
+      "slide_template_key": ""
+    }
+  ]
+}

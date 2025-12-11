@@ -1,0 +1,103 @@
+{
+  "identityProviderAlias": "azure-ad",
+  "mappers": [
+    {
+      "name": "email",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "claim": "email",
+        "user.attribute": "email",
+        "syncMode": "INHERIT"
+      }
+    },
+    {
+      "name": "first-name",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "claim": "given_name",
+        "user.attribute": "firstName",
+        "syncMode": "INHERIT"
+      }
+    },
+    {
+      "name": "last-name",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "claim": "family_name",
+        "user.attribute": "lastName",
+        "syncMode": "INHERIT"
+      }
+    },
+    {
+      "name": "username",
+      "identityProviderMapper": "oidc-username-idp-mapper",
+      "config": {
+        "template": "${CLAIM.email}",
+        "syncMode": "INHERIT"
+      }
+    },
+    {
+      "name": "employee-id",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "claim": "extension_employeeId",
+        "user.attribute": "employeeId",
+        "syncMode": "INHERIT"
+      }
+    },
+    {
+      "name": "department",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "claim": "department",
+        "user.attribute": "department",
+        "syncMode": "INHERIT"
+      }
+    },
+    {
+      "name": "job-title",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "claim": "jobTitle",
+        "user.attribute": "jobTitle",
+        "syncMode": "INHERIT"
+      }
+    },
+    {
+      "name": "manager-id",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "claim": "extension_managerId",
+        "user.attribute": "managerId",
+        "syncMode": "INHERIT"
+      }
+    },
+    {
+      "name": "tenant-id",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "claim": "tid",
+        "user.attribute": "tenant_id",
+        "syncMode": "INHERIT"
+      }
+    },
+    {
+      "name": "preferred-language",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "claim": "locale",
+        "user.attribute": "preferredLanguage",
+        "syncMode": "INHERIT"
+      }
+    },
+    {
+      "name": "azure-ad-role-mapper",
+      "identityProviderMapper": "oidc-role-idp-mapper",
+      "config": {
+        "claim": "roles",
+        "role": "user",
+        "syncMode": "INHERIT"
+      }
+    }
+  ]
+}

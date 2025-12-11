@@ -1,0 +1,130 @@
+{
+  "realm": "alpha-bank-realm",
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Administrator with full system access",
+        "composite": false,
+        "clientRole": false,
+        "attributes": {
+          "permissions": [
+            "manage_users",
+            "manage_spaces",
+            "manage_bookings",
+            "view_analytics",
+            "manage_policies",
+            "manage_notifications"
+          ]
+        }
+      },
+      {
+        "name": "manager",
+        "description": "Manager with team oversight capabilities",
+        "composite": false,
+        "clientRole": false,
+        "attributes": {
+          "permissions": [
+            "view_team_bookings",
+            "approve_bookings",
+            "view_team_analytics",
+            "manage_team_spaces"
+          ]
+        }
+      },
+      {
+        "name": "user",
+        "description": "Standard user with booking capabilities",
+        "composite": false,
+        "clientRole": false,
+        "attributes": {
+          "permissions": [
+            "create_booking",
+            "view_own_bookings",
+            "cancel_own_booking",
+            "view_available_spaces"
+          ]
+        }
+      },
+      {
+        "name": "facility_manager",
+        "description": "Facility manager with space and resource management",
+        "composite": false,
+        "clientRole": false,
+        "attributes": {
+          "permissions": [
+            "manage_buildings",
+            "manage_floors",
+            "manage_desks",
+            "manage_meeting_rooms",
+            "view_utilization",
+            "manage_maintenance"
+          ]
+        }
+      },
+      {
+        "name": "hr",
+        "description": "HR personnel with employee and policy management",
+        "composite": false,
+        "clientRole": false,
+        "attributes": {
+          "permissions": [
+            "manage_employees",
+            "view_all_bookings",
+            "manage_policies",
+            "view_reports",
+            "export_data"
+          ]
+        }
+      },
+      {
+        "name": "guest",
+        "description": "Guest user with limited access",
+        "composite": false,
+        "clientRole": false,
+        "attributes": {
+          "permissions": [
+            "view_available_spaces",
+            "create_guest_booking"
+          ]
+        }
+      }
+    ],
+    "client": {
+      "workspace-manager-api": [
+        {
+          "name": "api-admin",
+          "description": "API administrative access",
+          "composite": false,
+          "clientRole": true
+        },
+        {
+          "name": "api-read",
+          "description": "API read-only access",
+          "composite": false,
+          "clientRole": true
+        },
+        {
+          "name": "api-write",
+          "description": "API write access",
+          "composite": false,
+          "clientRole": true
+        }
+      ]
+    }
+  },
+  "defaultRoles": [
+    "user"
+  ],
+  "roleComposites": {
+    "admin": [
+      "manager",
+      "user",
+      "facility_manager",
+      "hr"
+    ],
+    "manager": [
+      "user"
+    ]
+  }
+}
