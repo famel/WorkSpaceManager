@@ -1,0 +1,56 @@
+name: Windows Service Smoke Test
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'run-services.cmd'
+      - 'stop-services.cmd'
+      - 'run-services.ps1'
+      - 'stop-services.ps1'
+      - '.github/workflows/windows-service-smoke.yml'
+
+jobs:
+  smoke:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore HeadlessDMS.sln
+
+      - name: Build (no tests)
+        run: dotnet build HeadlessDMS.sln --configuration Release --no-restore
+
+      - name: Start services (CMD)
+        shell: cmd
+        run: |
+          call run-services.cmd
+          REM Allow some startup time
+          ping -n 10 127.0.0.1 >NUL
+
+      - name: Probe Repository Swagger
+        shell: pwsh
+        run: |
+          $resp = Invoke-WebRequest -Uri http://localhost:5001/swagger -UseBasicParsing -TimeoutSec 10
+          if ($resp.StatusCode -lt 200 -or $resp.StatusCode -ge 400) { throw "Repository service not healthy" }
+
+      - name: Stop services (CMD)
+        if: always()
+        shell: cmd
+        run: |
+          call stop-services.cmd
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-service-logs
+          path: ${{ runner.temp }}\HeadlessDMS\*.log

@@ -1,0 +1,328 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+jobs:
+  test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          SA_PASSWORD: YourStrong@Passw0rd
+          ACCEPT_EULA: Y
+          MSSQL_PID: Developer
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong@Passw0rd -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Shallow clones should be disabled for better analysis
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Cache NuGet packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build solution
+      run: dotnet build --configuration Release --no-restore
+    
+    - name: Run unit tests
+      run: |
+        dotnet test src/Tests/Unit/HeadlessDMS.Tests.Unit \
+          --configuration Release \
+          --no-build \
+          --verbosity normal \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ./TestResults/Unit \
+          --logger trx
+    
+    - name: Run integration tests
+      run: |
+        dotnet test src/Tests/Integration/HeadlessDMS.Tests.Integration \
+          --configuration Release \
+          --no-build \
+          --verbosity normal \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ./TestResults/Integration \
+          --logger trx
+      env:
+        ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=HeadlessDMS_Test;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=true;"
+        ConnectionStrings__Redis: "localhost:6379"
+    
+    - name: Merge coverage reports
+      run: |
+        dotnet tool install -g dotnet-reportgenerator-globaltool
+        reportgenerator \
+          -reports:"TestResults/**/coverage.cobertura.xml" \
+          -targetdir:"TestResults/Coverage" \
+          -reporttypes:"Cobertura;HtmlInline_AzurePipelines"
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./TestResults/Coverage/Cobertura.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results
+        path: TestResults/
+    
+    - name: Publish test results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results
+        path: 'TestResults/**/*.trx'
+        reporter: dotnet-trx
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Run security scan
+      run: |
+        dotnet list package --vulnerable --include-transitive 2>&1 | tee security-scan.log
+        if grep -q "has the following vulnerable packages" security-scan.log; then
+          echo "Vulnerable packages found!"
+          exit 1
+        fi
+    
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-scan
+        path: security-scan.log
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: false
+        tags: headlessdms:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Test Docker image
+      run: |
+        docker run --rm --entrypoint="" headlessdms:latest dotnet --version
+    
+    - name: Scan Docker image for vulnerabilities
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'headlessdms:latest'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Cache SonarCloud packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.sonar/cache
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar
+    
+    - name: Install SonarCloud scanner
+      run: |
+        dotnet tool install --global dotnet-sonarscanner
+    
+    - name: Build and analyze
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        if [ -n "${{ secrets.SONAR_TOKEN }}" ]; then
+          dotnet-sonarscanner begin \
+            /k:"manudocman" \
+            /o:"your-org" \
+            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml"
+          
+          dotnet build --configuration Release
+          
+          dotnet test --configuration Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+          
+          dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+        else
+          echo "SonarCloud token not configured, skipping analysis"
+        fi
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [test, security, docker, quality]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Add your staging deployment commands here
+        # Example: kubectl apply -f k8s/ --namespace=headlessdms-staging
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [test, security, docker, quality]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production environment..."
+        # Add your production deployment commands here
+        # Example: kubectl apply -f k8s/ --namespace=headlessdms-production
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [test, security, docker, quality]
+    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[release]')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Build release artifacts
+      run: |
+        dotnet publish src/Services/RepositoryService \
+          --configuration Release \
+          --output ./artifacts/RepositoryService \
+          --self-contained false
+    
+    - name: Create release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Release v${{ github.run_number }}
+        body: |
+          ## Changes in this Release
+          
+          ${{ github.event.head_commit.message }}
+          
+          ## Artifacts
+          
+          - Docker image: `headlessdms:v${{ github.run_number }}`
+          - Kubernetes manifests: Available in `k8s/` directory
+          
+          ## Installation
+          
+          See [README.md](README.md) for installation instructions.
+        draft: false
+        prerelease: false
+
