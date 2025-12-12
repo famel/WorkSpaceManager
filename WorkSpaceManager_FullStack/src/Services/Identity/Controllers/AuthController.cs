@@ -159,6 +159,100 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// User registration
+    /// </summary>
+    [HttpPost("register")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<UserInfoResponse>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<UserInfoResponse>), 400)]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<UserInfoResponse>.ErrorResponse("Invalid request"));
+        }
+
+        try
+        {
+            _logger.LogInformation("Registration attempt for: {Email}", request.Email);
+
+            // Check if email already exists
+            var existingUser = await _context.Users
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Email == request.Email && !u.IsDeleted, cancellationToken);
+
+            if (existingUser != null)
+            {
+                _logger.LogWarning("Registration failed: Email already exists - {Email}", request.Email);
+                return BadRequest(ApiResponse<UserInfoResponse>.ErrorResponse("An account with this email already exists"));
+            }
+
+            // Use default tenant for self-registration
+            var defaultTenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+
+            // Create new user
+            var user = new User
+            {
+                TenantId = defaultTenantId,
+                EmployeeId = $"EMP-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Email = request.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                Department = request.Department,
+                JobTitle = request.JobTitle,
+                PhoneNumber = request.PhoneNumber,
+                IsActive = true
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            // Assign default User role
+            var userRole = await _context.Roles
+                .FirstOrDefaultAsync(r => r.Name == "User" && r.TenantId == defaultTenantId, cancellationToken);
+
+            if (userRole != null)
+            {
+                var userRoleAssignment = new UserRole
+                {
+                    TenantId = defaultTenantId,
+                    UserId = user.Id,
+                    RoleId = userRole.Id,
+                    IsActive = true
+                };
+                _context.UserRoles.Add(userRoleAssignment);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            var roles = userRole != null ? new List<string> { userRole.Name } : new List<string>();
+
+            var response = new UserInfoResponse
+            {
+                Id = user.Id,
+                EmployeeId = user.EmployeeId,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Department = user.Department,
+                JobTitle = user.JobTitle,
+                PhoneNumber = user.PhoneNumber,
+                IsActive = user.IsActive,
+                Roles = roles
+            };
+
+            _logger.LogInformation("User registered successfully: {Email}", request.Email);
+
+            return Ok(ApiResponse<UserInfoResponse>.SuccessResponse(response, "Registration successful"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during registration for {Email}", request.Email);
+            return StatusCode(500, ApiResponse<UserInfoResponse>.ErrorResponse("An error occurred during registration"));
+        }
+    }
+
+    /// <summary>
     /// Refresh access token
     /// </summary>
     [HttpPost("refresh")]
